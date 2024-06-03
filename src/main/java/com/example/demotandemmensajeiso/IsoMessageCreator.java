@@ -5,6 +5,8 @@ import org.jpos.iso.ISOMsg;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
@@ -20,13 +22,9 @@ public class IsoMessageCreator {
 
 
     /** Método para crear un mensaje ISO 8583 de prueba */
-    public ISOMsg createMessage() throws ISOException {
+/*    public ISOMsg createMessage() throws ISOException {
         ISOMsg msg = new ISOMsg();
         msg.setPackager(handler.getPackager());
-
-        //msg.setHeader("6000000000".getBytes());
-        //msg.setHeader(handler.parseHexBinary("6000000000"));
-
         msg.set(0, "0800");                      // MTI
         msg.set(3, "920000");                    // Processing Code
         msg.set(7, "0527100111");                // Date and Time
@@ -34,10 +32,29 @@ public class IsoMessageCreator {
         msg.set(24, "014");                      // Function Code
         msg.set(41, "POS12345");                 // Card Acceptor Terminal Identification (serial number + id derivacion)
         msg.set(62, "00160100000000014631");      // Id Derivación (tiene q tener 16 digitos ascii) -- SIN LOS ESPACIOS
+        return msg;
+    }*/
+    public ISOMsg createMessage(String terminalNumber, String derivationId) throws ISOException {
+        ISOMsg msg = new ISOMsg();
+        msg.setPackager(handler.getPackager());
 
-        // msg.set(62, "01 00000 000014631");
+        // Campo 7 - Fecha y hora
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMHHmmss");
+        String formattedTime = now.format(formatter);
+        msg.set(7, formattedTime);
 
-        //handler.printMessageXMLFormat(msg);
+        // Campo 41 - Número de terminal
+        msg.set(41, terminalNumber);
+
+        // Campo 62 - ID de derivación
+        String formattedDerivationId = String.format("%016d", new BigInteger(derivationId));
+        msg.set(62, "16" + formattedDerivationId);
+
+        msg.set(0, "0800");                      // MTI
+        msg.set(3, "920000");                    // Processing Code
+        msg.set(11, "000001");                   // System Trace Audit Number
+        msg.set(24, "014");                      // Function Code
 
         return msg;
     }
@@ -57,7 +74,7 @@ public class IsoMessageCreator {
     /** Método para preparar un mensaje ISO 8583 para ser enviado (con formato para tandem) */
     public byte[] prepareMessage() throws ISOException {
         // Crear el mensaje ISO 8583
-        ISOMsg message = this.createMessage();
+        ISOMsg message = this.createMessage("POS12345", "00160100000000014631");
         System.out.println("Mensaje ISO 8583 creado:");
         handler.printMessageXMLFormat(message);
 

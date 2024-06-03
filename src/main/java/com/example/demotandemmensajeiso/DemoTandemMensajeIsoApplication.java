@@ -69,7 +69,7 @@ public class DemoTandemMensajeIsoApplication {
         IsoMessageCreator isoMessageCreator = new IsoMessageCreator(handler);
 
         // Crea un mensaje
-        ISOMsg message = isoMessageCreator.createMessage();
+        ISOMsg message = isoMessageCreator.createMessage("POS12345", "00160100000000014631");
         System.out.println("....");
         System.out.println("Mensaje creado...");
 
