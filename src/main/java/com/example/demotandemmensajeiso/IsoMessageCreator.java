@@ -3,6 +3,9 @@ package com.example.demotandemmensajeiso;
 import org.jpos.iso.ISOException;
 import org.jpos.iso.ISOMsg;
 
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 
@@ -22,17 +25,19 @@ public class IsoMessageCreator {
         msg.setPackager(handler.getPackager());
 
         //msg.setHeader("6000000000".getBytes());
-        msg.setHeader(handler.parseHexBinary("6000000000"));
+        //msg.setHeader(handler.parseHexBinary("6000000000"));
+
         msg.set(0, "0800");                      // MTI
         msg.set(3, "920000");                    // Processing Code
         msg.set(7, "0527100111");                // Date and Time
         msg.set(11, "000001");                   // System Trace Audit Number
         msg.set(24, "014");                      // Function Code
         msg.set(41, "POS12345");                 // Card Acceptor Terminal Identification (serial number + id derivacion)
-        msg.set(62, "00160100000000014631");       // Id Derivación (tiene q tener 16 digitos ascii) -- SIN LOS ESPACIOS
-       // msg.set(62, "01 00000 000014631");
+        msg.set(62, "00160100000000014631");      // Id Derivación (tiene q tener 16 digitos ascii) -- SIN LOS ESPACIOS
 
-        handler.printMessageXMLFormat(msg);
+        // msg.set(62, "01 00000 000014631");
+
+        //handler.printMessageXMLFormat(msg);
 
         return msg;
     }
@@ -48,6 +53,49 @@ public class IsoMessageCreator {
         return handler.parseHexBinary(hexString);
     }
 
+
+    /** Método para preparar un mensaje ISO 8583 para ser enviado (con formato para tandem) */
+    public byte[] prepareMessage() throws ISOException {
+        // Crear el mensaje ISO 8583
+        ISOMsg message = this.createMessage();
+        System.out.println("Mensaje ISO 8583 creado:");
+        handler.printMessageXMLFormat(message);
+
+        // Empaquetar el mensaje
+        byte[] packedMessage = handler.packMessage(message);
+        System.out.println("Mensaje empaquetado:");
+        System.out.println(Arrays.toString(packedMessage));
+
+        // Agregar el encabezado al mensaje
+        byte[] header = handler.parseHexBinary("6000000000");
+        byte[] messageWithHeader = new byte[header.length + packedMessage.length];
+        System.arraycopy(header, 0, messageWithHeader, 0, header.length);
+        System.arraycopy(packedMessage, 0, messageWithHeader, header.length, packedMessage.length);
+        System.out.println("Encabezado agregado al mensaje:");
+        System.out.println(Arrays.toString(messageWithHeader));
+
+        // Calcular la longitud del mensaje completo (encabezado + mensaje)
+        int messageLength = messageWithHeader.length;
+        System.out.println("Longitud del mensaje completo (encabezado + mensaje): " + messageLength);
+
+        // Convertir esa longitud a un formato adecuado ( hexadecimal)
+        String lengthHexString = String.format("%04x", messageLength); // Asegurarse de que la longitud siempre tenga 4 caracteres (2 bytes)
+        System.out.println("Longitud del mensaje en formato hexadecimal: " + lengthHexString);
+
+        // el mensaje final concatenando la longitud, el encabezado y el mensaje
+        byte[] lengthBytes = handler.parseHexBinary(lengthHexString);
+        byte[] finalMessage = new byte[lengthBytes.length + messageWithHeader.length];
+        System.arraycopy(lengthBytes, 0, finalMessage, 0, lengthBytes.length);
+        System.arraycopy(messageWithHeader, 0, finalMessage, lengthBytes.length, messageWithHeader.length);
+        System.out.println("Mensaje final preparado:");
+        System.out.println(Arrays.toString(finalMessage));
+
+
+        String finalMessageHex = new BigInteger(1, finalMessage).toString(16);
+        System.out.println("Mensaje final en formato hexadecimal: " + finalMessageHex);
+
+        return finalMessage;
+    }
 
 
 

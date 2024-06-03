@@ -6,6 +6,7 @@ import org.jpos.iso.packager.ISO87BPackager;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Scanner;
@@ -31,16 +32,16 @@ public class DemoTandemMensajeIsoApplication {
                     IsoClient client = new IsoClient("127.0.0.1", 7940, handler);          // Instancia un nuevo cliente con ip , puerto y handler
                     IsoMessageCreator creator = new IsoMessageCreator(handler);                     // Instancia un nuevo creador de mensajes
 
-                    /*
-                    ISOMsg message = creator.createMessage();                                        // Crea un mensaje
+/*                    ISOMsg message = creator.createMessage();                                        // Crea un mensaje
                     byte[] packedMessage = handler.packMessage(message);                                // Empaqueta el mensaje
-                    client.sendAndReceiveMessage(packedMessage);                                        // Envia el mensaje
-                    */
+                    client.sendAndReceiveMessage(packedMessage);  */                                      // Envia el mensaje
 
 
+                  /*  byte[] message = creator.TestMsgPacketSender();
+                    client.sendAndReceiveMessage(message);*/
 
-                    byte[] message = creator.TestMsgPacketSender();
-                    client.sendAndReceiveMessage(message);
+                    byte[] finalMessage = creator.prepareMessage();
+                    client.sendAndReceiveMessage(finalMessage);
 
                 } else if (mode.equals("server")){
                     System.out.println("####  App running in server mode. ####");
@@ -81,6 +82,8 @@ public class DemoTandemMensajeIsoApplication {
         System.out.println("....");
 
     }
+
+
 
 
 }
